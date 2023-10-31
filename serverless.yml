@@ -1,0 +1,45 @@
+service: my-service
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+      Resource: "arn:aws:s3:::s3imagesjlabucket*"
+  role: arn:aws:iam::033848016404:role/LambdaS3AccessRole  
+  environment:
+    MYSQL_HOST: ${ssm:/my-service/dev/MYSQL_HOST}
+    MYSQL_DATABASE: ${ssm:/my-service/dev/MYSQL_DATABASE}
+    MYSQL_USER: ${ssm:/my-service/dev/MYSQL_USER}
+    MYSQL_PASSWORD: ${ssm:/my-service/dev/MYSQL_PASSWORD}
+    BUCKET_NAME: ${ssm:/my-service/dev/BUCKET_NAME}
+
+  vpc:
+    securityGroupIds:
+      - sg-0a7435567c9f380c9
+    subnetIds:
+      - subnet-0dcfcf0e9d04a7b2d
+      - subnet-004a0313275d63fc6
+      - subnet-0232efd8831d96ab6
+
+functions:
+  getImages:
+    handler: handler.getImages
+    timeout: 30
+    events:
+      - http:
+          path: images
+          method: get
+  insertImage:
+    handler: handler.insertImage
+    timeout: 30
+    events:
+      - http:
+          path: images/insert
+          method: post
+
+plugins:
+  - serverless-iam-roles-per-function
